@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "georecl"
+version = "0.1.1"
+description = "A geoserver rest client supporting authkey and basic auth(user,pass)"
+authors = ["Mukesh <mkpandey.irs@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.2"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.1"
+requests-mock = "^1.12.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
