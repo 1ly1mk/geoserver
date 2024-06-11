@@ -1,0 +1,68 @@
+services:
+  wms:
+    image: geoservercloud/geoserver-cloud-wms:${TAG}
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${GEOSERVER_DEFAULT_PROFILES},debug,datadir
+      GEOSERVER_ADDITIONAL_LOCATION: /opt/app/additional_libs
+    volumes:
+      - ./geoserver_data_directory:/opt/geoserver_data
+      - ./additional_libs:/opt/app/additional_libs
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        required: true
+      discovery:
+        condition: service_started
+        required: true
+  discovery:
+    image: geoservercloud/geoserver-cloud-discovery:${TAG}
+    user: ${GS_USER}
+    environment:
+      JAVA_OPTS: "${JAVA_OPTS_DISCOVERY}"     
+    ports:
+      - 8761:8761 # for development, so services can be run from localhost and find the discovery service running on docker
+    restart: unless-stopped
+    depends_on:
+      - config
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+  config:
+    image: geoservercloud/geoserver-cloud-config:${TAG}
+    user: ${GS_USER}
+    environment:
+      JAVA_OPTS: "${JAVA_OPTS_CONFIG}"
+      # Either 'git' or 'native'. Use the default sample git repository to download the services configuration from
+      # If 'git', BEWARE config server will look for a branch called "master", and github changed the default branch name to "main"
+      # For more information, see https://cloud.spring.io/spring-cloud-config/multi/multi__spring_cloud_config_server.html#_git_backend
+      SPRING_PROFILES_ACTIVE: native,standalone
+      # 'git' profile config
+      CONFIG_GIT_URI: https://github.com/geoserver/geoserver-cloud-config
+      CONFIG_GIT_BASEDIR: /tmp/git_config
+      # 'native' profile config
+      CONFIG_NATIVE_PATH: /tmp/config
+    restart: unless-stopped
+    volumes:
+      - ./config:/tmp/config
+    ports:
+      - 8888:8080
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 20s
+      timeout: 5s
+      retries: 5

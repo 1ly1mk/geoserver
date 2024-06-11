@@ -1,3 +1,6 @@
 /additional_libs/*
 /geoserver_data/*
 /georecl/dist/*
+/geoserver_data_directory/*
+/config/
+/jdbcconfig_data/*
